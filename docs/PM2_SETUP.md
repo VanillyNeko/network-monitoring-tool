@@ -2,6 +2,8 @@
 
 PM2 is a production process manager for Node.js applications that keeps your application running, automatically restarts it if it crashes, and provides useful monitoring tools.
 
+**Related Pages:** [Home](Home) | [Installation](Installation) | [Troubleshooting](Troubleshooting)
+
 ## Installation
 
 ### Install PM2 Globally
@@ -463,7 +465,8 @@ pm2 resurrect
 
 ## Next Steps
 
-- See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for authentication
-- See [PROVIDER_SETUP.md](PROVIDER_SETUP.md) for provider configuration
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for more help
+- See [Keycloak Setup](Keycloak-Setup) for authentication
+- See [Provider Setup](Provider-Setup) for provider configuration
+- See [Troubleshooting](Troubleshooting) for more help
+- [Home](Home) - Wiki index
 

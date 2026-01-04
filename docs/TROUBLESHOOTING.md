@@ -2,6 +2,8 @@
 
 Common issues and solutions for the Network Monitoring Dashboard.
 
+**Related Pages:** [Home](Home) | [Installation](Installation) | [Keycloak Setup](Keycloak-Setup) | [Provider Setup](Provider-Setup)
+
 ## Table of Contents
 
 - [Dashboard Issues](#dashboard-issues)
@@ -516,8 +518,9 @@ pm2 start ecosystem.config.js --node-args="--inspect"
 
 ## Next Steps
 
-- See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for authentication setup
-- See [PROVIDER_SETUP.md](PROVIDER_SETUP.md) for provider configuration
-- See [DISCORD_SETUP.md](DISCORD_SETUP.md) for notifications
-- See [PM2_SETUP.md](PM2_SETUP.md) for process management
+- See [Keycloak Setup](Keycloak-Setup) for authentication setup
+- See [Provider Setup](Provider-Setup) for provider configuration
+- See [Discord Setup](Discord-Setup) for notifications
+- See [PM2 Setup](PM2-Setup) for process management
+- [Home](Home) - Wiki index
 

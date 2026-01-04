@@ -11,7 +11,7 @@ http://your-server:5643
 
 ## Authentication
 
-Some endpoints require Keycloak authentication. See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for setup.
+Some endpoints require Keycloak authentication. See [Keycloak Setup](Keycloak-Setup) for setup.
 
 ## Public Endpoints
 
@@ -301,7 +301,8 @@ WebSocket support for real-time updates is not currently implemented but could b
 
 ## Next Steps
 
-- See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for authentication setup
-- See [PROVIDER_SETUP.md](PROVIDER_SETUP.md) for provider configuration
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for API-related issues
+- See [Keycloak Setup](Keycloak-Setup) for authentication setup
+- See [Provider Setup](Provider-Setup) for provider configuration
+- See [Troubleshooting](Troubleshooting) for API-related issues
+- [Home](Home) - Wiki index
 

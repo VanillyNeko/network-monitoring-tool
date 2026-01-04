@@ -1,0 +1,70 @@
+name: Docker Build Check
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC to check for dependency updates
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build-check:
+    name: Build and Test Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: network-monitoring-tool:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Create test config
+        run: |
+          cp config.json.example config.json
+          node -e "
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+            config.providers = [{
+              name: 'Test Provider',
+              ip: '127.0.0.1',
+              api_url: 'http://127.0.0.1/test',
+              health_key_path: ['status'],
+              signal_keys: [],
+              requires_auth: false
+            }];
+            config.session_secret = 'test-secret-' + Math.random().toString(36);
+            config.check_interval_seconds = 60;
+            config.web_port = 5643;
+            config.keycloak = { enabled: false };
+            fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+          "
+      
+      - name: Run container health check
+        run: |
+          docker run --rm -d --name test-container \
+            -p 5644:5643 \
+            -v $(pwd)/config.json:/app/config.json:ro \
+            network-monitoring-tool:latest
+          
+          echo "Waiting for container to start..."
+          sleep 15
+          
+          echo "Checking container health..."
+          docker ps --filter name=test-container --format "{{.Status}}"
+          
+          echo "Checking application logs..."
+          docker logs test-container
+          
+          echo "Testing health endpoint..."
+          curl -f http://localhost:5644/api/status || echo "Health check failed"
+          
+          echo "Stopping container..."
+          docker stop test-container
+

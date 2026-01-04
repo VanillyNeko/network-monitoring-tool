@@ -14,65 +14,79 @@ A comprehensive monitoring system for tracking multiple internet providers and n
 - 📈 **Comprehensive Metrics** - Signal strength, bandwidth, uptime, and more
 - 🎨 **Themeable UI** - Customizable themes with smooth transitions
 - 🔒 **Role-Based Access** - Public status view, detailed view requires authentication
+- 📱 **Embeddable Widget** - Embed the dashboard in other websites or status pages
+- 🔄 **Dual Monitoring** - Monitor providers both directly and via UniFi gateway WAN status
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Docker Deployment](#docker-deployment)
+- [Project Structure](#project-structure)
 - [Configuration](#configuration)
 - [Keycloak Setup](#keycloak-setup)
 - [Provider Configuration](#provider-configuration)
 - [Discord Webhooks](#discord-webhooks)
 - [PM2 Process Management](#pm2-process-management)
+- [Embedding](#embedding)
 - [Troubleshooting](#troubleshooting)
 - [API Endpoints](#api-endpoints)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 
 ## Installation
 
-### Prerequisites
+For detailed installation instructions, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
-- Node.js 18+ and npm
-- PM2 (optional, for process management)
-- Keycloak server (optional, for authentication)
-- Discord webhook (optional, for notifications)
+### Quick Installation
 
-### Step 1: Clone or Download
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/VanillyNeko/network-monitoring-tool.git
+   cd network-monitoring-tool
+   ```
 
-```bash
-git clone <repository-url>
-cd cell-monitoring
-```
-
-### Step 2: Install Dependencies
-
-```bash
-npm install
-```
-
-### Step 3: Configure
-
-Copy and edit the configuration file:
-
-```bash
-cp config.json.example config.json
-# Then edit config.json with your settings
-```
-
-**Important:** Never commit `config.json` to version control - it contains sensitive information. Use `config.json.example` as a template.
-
-See [Configuration](#configuration) for detailed setup instructions.
-
-## Quick Start
-
-### Basic Setup (No Authentication)
-
-1. **Install dependencies:**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. **Configure providers in `config.json`** (see [Provider Configuration](#provider-configuration))
+3. **Create configuration:**
+   ```bash
+   cp config.json.example config.json
+   # Edit config.json with your settings
+   ```
+
+4. **Start the application:**
+   ```bash
+   npm start
+   # Or with PM2 (recommended):
+   npm run pm2:start
+   ```
+
+5. **Access the dashboard:**
+   Open `http://localhost:5643` in your browser
+
+See [docs/INSTALLATION.md](docs/INSTALLATION.md) for complete installation guide, troubleshooting, and advanced setup.
+
+## Quick Start
+
+Get up and running in 5 minutes! See the [Quick Start Guide](docs/QUICKSTART.md) for a streamlined setup.
+
+### Basic Setup (No Authentication)
+
+1. **Clone and install:**
+   ```bash
+   git clone https://github.com/VanillyNeko/network-monitoring-tool.git
+   cd network-monitoring-tool
+   npm install
+   ```
+
+2. **Create configuration:**
+   ```bash
+   cp config.json.example config.json
+   # Edit config.json with your provider settings
+   ```
 
 3. **Start the application:**
    ```bash
@@ -82,37 +96,88 @@ See [Configuration](#configuration) for detailed setup instructions.
 4. **Access the dashboard:**
    Open `http://localhost:5643` in your browser
 
-### With PM2 (Recommended)
+For detailed instructions, see [docs/QUICKSTART.md](docs/QUICKSTART.md) or [docs/INSTALLATION.md](docs/INSTALLATION.md).
+
+### With Docker (Recommended for Production)
+
+1. **Create configuration:**
+   ```bash
+   cp config.json.example config.json
+   # Edit config.json with your settings
+   ```
+
+2. **Start with Docker Compose:**
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **View logs:**
+   ```bash
+   docker-compose logs -f
+   ```
+
+4. **Access the dashboard:**
+   Open `http://localhost:5643` in your browser
+
+See [DOCKER.md](DOCKER.md) for detailed Docker deployment guide.
+
+### With PM2 (Alternative)
 
 1. **Install PM2 globally:**
    ```bash
    npm install -g pm2
    ```
 
-2. **Start with PM2:**
+2. **Note:** The `ecosystem.config.js` file is included for PM2 configuration. If you need to customize it, edit the file before starting.
+
+3. **Start with PM2:**
    ```bash
    npm run pm2:start
    ```
 
-3. **Check status:**
+4. **Check status:**
    ```bash
    npm run pm2:status
    ```
 
-4. **View logs:**
+5. **View logs:**
    ```bash
    npm run pm2:logs
    ```
 
-5. **Enable auto-start on boot:**
+6. **Enable auto-start on boot:**
    ```bash
    pm2 startup
    pm2 save
    ```
 
+## Project Structure
+
+```
+network-monitoring-tool/
+├── monitor.js              # Main application file
+├── package.json           # Node.js dependencies and scripts
+├── config.json.example    # Example configuration (copy to config.json)
+├── ecosystem.config.js    # PM2 configuration (if using PM2)
+├── public/                # Web dashboard files
+│   ├── index.html        # Main dashboard page
+│   └── embed.html        # Embedding instructions
+├── docs/                  # Documentation
+│   ├── API.md            # API endpoint documentation
+│   ├── KEYCLOAK_SETUP.md # Keycloak authentication setup
+│   ├── PROVIDER_SETUP.md # Provider configuration guide
+│   ├── DISCORD_SETUP.md  # Discord webhook setup
+│   ├── PM2_SETUP.md      # PM2 process management guide
+│   ├── EMBEDDING.md      # Embedding dashboard guide
+│   ├── TROUBLESHOOTING.md # Troubleshooting guide
+│   └── WIKI_INDEX.md     # Documentation index
+├── LICENSE                # MIT License
+└── README.md             # This file
+```
+
 ## Configuration
 
-The main configuration file is `config.json`. Here's the structure:
+The main configuration file is `config.json`. Copy the example file and edit it:
 
 ```json
 {
@@ -164,6 +229,9 @@ The main configuration file is `config.json`. Here's the structure:
 | `session_secret` | Secret for session encryption | Yes |
 | `check_interval_seconds` | How often to check providers (seconds) | Yes |
 | `web_port` | Port for web dashboard | Yes |
+| `allow_embedding` | Allow iframe embedding of dashboard | No |
+
+**Note:** The `config.json` file is not included in the repository for security reasons. Always use `config.json.example` as a template.
 
 ## Keycloak Setup
 
@@ -299,6 +367,44 @@ pm2 logs cell-monitoring
 
 See [docs/PM2_SETUP.md](docs/PM2_SETUP.md) for detailed PM2 configuration.
 
+## Embedding
+
+The dashboard can be embedded as a widget or iframe in other websites or status pages.
+
+### Basic Embedding
+
+```html
+<iframe src="http://your-server:5643?mode=widget&theme=dark" 
+        width="100%" 
+        height="600px" 
+        frameborder="0">
+</iframe>
+```
+
+### URL Parameters
+
+- `mode=widget` - Widget mode (hides header/footer)
+- `theme=light|dark|anime` - Set theme
+- `compact=true` - Compact layout
+- `header=false` - Hide header
+- `auth=false` - Hide authentication section
+
+See [docs/EMBEDDING.md](docs/EMBEDDING.md) for detailed embedding instructions and examples.
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[INSTALLATION.md](docs/INSTALLATION.md)** - Complete installation guide
+- **[API.md](docs/API.md)** - Complete API endpoint documentation
+- **[KEYCLOAK_SETUP.md](docs/KEYCLOAK_SETUP.md)** - Step-by-step Keycloak authentication setup
+- **[PROVIDER_SETUP.md](docs/PROVIDER_SETUP.md)** - Detailed provider configuration examples
+- **[DISCORD_SETUP.md](docs/DISCORD_SETUP.md)** - Discord webhook configuration
+- **[PM2_SETUP.md](docs/PM2_SETUP.md)** - PM2 process management guide
+- **[EMBEDDING.md](docs/EMBEDDING.md)** - Embedding dashboard as widget/iframe
+- **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[WIKI_INDEX.md](docs/WIKI_INDEX.md)** - Documentation index
+
 ## Troubleshooting
 
 ### Common Issues
@@ -353,6 +459,38 @@ See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for more troubleshooting 
 
 See [docs/API.md](docs/API.md) for detailed API documentation.
 
+## CI/CD
+
+This project includes GitHub Actions workflows for automated testing, building, and releasing:
+
+### Continuous Integration
+
+The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request:
+- **Linting** - Validates JSON files and package structure
+- **Testing** - Tests application startup and configuration
+- **Docker Build** - Builds and tests Docker image
+- **Docker Compose** - Tests docker-compose setup
+
+### Releases
+
+The release workflow (`.github/workflows/release.yml`) automatically:
+- Builds Docker images for multiple architectures (amd64, arm64)
+- Pushes to GitHub Container Registry (GHCR)
+- Creates GitHub releases with notes
+
+**To create a release:**
+```bash
+git tag v1.0.0
+git push --tags
+```
+
+### Build Checks
+
+Daily automated builds (`.github/workflows/docker-build-check.yml`) verify:
+- Docker image builds successfully
+- Container health checks pass
+- Application starts correctly
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -379,6 +517,13 @@ For issues, questions, or contributions:
 - Built with Node.js, Express, and Keycloak
 - Dashboard uses modern CSS with theme support
 - PM2 for process management
+- UniFi Network API integration
+
+## Repository
+
+- **GitHub:** [VanillyNeko/network-monitoring-tool](https://github.com/VanillyNeko/network-monitoring-tool)
+- **Issues:** [Report a bug](https://github.com/VanillyNeko/network-monitoring-tool/issues)
+- **License:** MIT (see [LICENSE](LICENSE) file)
 
 ---
 

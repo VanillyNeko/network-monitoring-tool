@@ -2,6 +2,8 @@
 
 This guide covers how to configure different types of internet providers for monitoring.
 
+**Related Pages:** [Home](Home) | [Installation](Installation) | [Keycloak Setup](Keycloak-Setup) | [Troubleshooting](Troubleshooting)
+
 ## Table of Contents
 
 - [T-Mobile Home Internet](#t-mobile-home-internet)
@@ -339,7 +341,8 @@ tail -f logs/pm2-out.log
 
 ## Next Steps
 
-- See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for authentication
-- See [DISCORD_SETUP.md](DISCORD_SETUP.md) for notifications
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for more help
+- See [Keycloak Setup](Keycloak-Setup) for authentication
+- See [Discord Setup](Discord-Setup) for notifications
+- See [Troubleshooting](Troubleshooting) for more help
+- [Home](Home) - Wiki index
 

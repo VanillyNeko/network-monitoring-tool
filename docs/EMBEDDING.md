@@ -2,6 +2,8 @@
 
 This guide explains how to embed the Network Monitoring Dashboard as a widget on your website or status page.
 
+**Related Pages:** [Home](Home) | [API](API) | [Troubleshooting](Troubleshooting)
+
 ## Overview
 
 The dashboard can be embedded as an iframe widget on any website. It automatically detects when it's in an iframe and adjusts its layout accordingly.
@@ -349,7 +351,8 @@ loadStatus();
 
 ## Next Steps
 
-- See [README.md](../README.md) for general setup
-- See [API.md](API.md) for API documentation
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
+- See [Main README](https://github.com/VanillyNeko/network-monitoring-tool/blob/main/README.md) for general setup
+- See [API](API) for API documentation
+- See [Troubleshooting](Troubleshooting) for common issues
+- [Home](Home) - Wiki index
 

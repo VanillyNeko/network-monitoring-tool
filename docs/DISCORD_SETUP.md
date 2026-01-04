@@ -2,6 +2,8 @@
 
 This guide explains how to set up Discord notifications for the Network Monitoring Dashboard.
 
+**Related Pages:** [Home](Home) | [Installation](Installation) | [Troubleshooting](Troubleshooting)
+
 ## Overview
 
 Discord webhooks allow the monitoring system to send notifications directly to a Discord channel when:
@@ -306,7 +308,8 @@ if (!up && prevUp) {
 
 ## Next Steps
 
-- See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for authentication setup
-- See [PROVIDER_SETUP.md](PROVIDER_SETUP.md) for provider configuration
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for more help
+- See [Keycloak Setup](Keycloak-Setup) for authentication setup
+- See [Provider Setup](Provider-Setup) for provider configuration
+- See [Troubleshooting](Troubleshooting) for more help
+- [Home](Home) - Wiki index
 

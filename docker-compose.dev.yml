@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  network-monitor:
+    # Use local build for development
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Or use pre-built image:
+    # image: ghcr.io/vanillyneko/network-monitoring-tool:latest
+    container_name: network-monitoring-tool-dev
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5643}:5643"
+    volumes:
+      # Mount config file
+      - ./config.json:/app/config.json:ro
+      # Mount logs directory
+      - ./logs:/app/logs
+      # Mount source code for development (optional)
+      - ./monitor.js:/app/monitor.js:ro
+      - ./public:/app/public:ro
+    environment:
+      - NODE_ENV=development
+      - DEBUG=*
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5643/api/status', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - monitoring-network
+
+networks:
+  monitoring-network:
+    driver: bridge
+

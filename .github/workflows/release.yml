@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}"
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/network-monitoring-tool:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/network-monitoring-tool:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > release_notes.md << EOF
+          ## Docker Image
+          
+          Docker image is available at:
+          \`\`\`
+          ghcr.io/${{ github.repository_owner }}/network-monitoring-tool:${{ steps.version.outputs.version }}
+          \`\`\`
+          
+          ### Usage
+          
+          \`\`\`bash
+          docker pull ghcr.io/${{ github.repository_owner }}/network-monitoring-tool:${{ steps.version.outputs.version }}
+          docker run -d \\
+            -p 5643:5643 \\
+            -v \$(pwd)/config.json:/app/config.json:ro \\
+            -v \$(pwd)/logs:/app/logs \\
+            ghcr.io/${{ github.repository_owner }}/network-monitoring-tool:${{ steps.version.outputs.version }}
+          \`\`\`
+          
+          Or use docker-compose:
+          \`\`\`bash
+          docker-compose up -d
+          \`\`\`
+          EOF
+          cat release_notes.md
+      
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+

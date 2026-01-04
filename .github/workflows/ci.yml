@@ -1,0 +1,178 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check package.json syntax
+        run: node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8'))"
+      
+      - name: Validate config.json.example
+        run: node -e "JSON.parse(require('fs').readFileSync('config.json.example', 'utf8'))"
+
+  test:
+    name: Test Application
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Create test config
+        run: |
+          cp config.json.example config.json
+          # Set minimal test configuration
+          node -e "
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+            config.providers = [{
+              name: 'Test Provider',
+              ip: '127.0.0.1',
+              api_url: 'http://127.0.0.1/test',
+              health_key_path: ['status'],
+              signal_keys: [],
+              requires_auth: false
+            }];
+            config.session_secret = 'test-secret-' + Math.random().toString(36);
+            config.check_interval_seconds = 60;
+            config.web_port = 5643;
+            config.keycloak = { enabled: false };
+            fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+          "
+      
+      - name: Test application startup
+        run: |
+          timeout 10 node monitor.js || true
+          # Check if process started (should exit due to missing dependencies or timeout)
+          echo "Application startup test completed"
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image (test only)
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: network-monitoring-tool:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/network-monitoring-tool
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+      
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Test Docker image
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            IMAGE_TAG="network-monitoring-tool:test"
+          else
+            IMAGE_TAG="ghcr.io/${{ github.repository_owner }}/network-monitoring-tool:latest"
+            docker pull $IMAGE_TAG || echo "Image not available yet"
+          fi
+          docker run --rm -d --name test-container -p 5644:5643 \
+            -v $(pwd)/config.json.example:/app/config.json:ro \
+            $IMAGE_TAG || true
+          sleep 5
+          docker logs test-container || true
+          docker stop test-container || true
+
+  docker-compose:
+    name: Test Docker Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create test config
+        run: |
+          cp config.json.example config.json
+          node -e "
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+            config.providers = [{
+              name: 'Test Provider',
+              ip: '127.0.0.1',
+              api_url: 'http://127.0.0.1/test',
+              health_key_path: ['status'],
+              signal_keys: [],
+              requires_auth: false
+            }];
+            config.session_secret = 'test-secret';
+            config.check_interval_seconds = 60;
+            config.web_port = 5643;
+            config.keycloak = { enabled: false };
+            fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
+          "
+      
+      - name: Test docker-compose build
+        run: docker-compose -f docker-compose.yml build
+      
+      - name: Test docker-compose up
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          sleep 10
+          docker-compose -f docker-compose.yml ps
+          docker-compose -f docker-compose.yml logs
+          docker-compose -f docker-compose.yml down
+

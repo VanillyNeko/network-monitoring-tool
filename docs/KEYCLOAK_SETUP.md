@@ -2,6 +2,8 @@
 
 This guide will walk you through setting up Keycloak authentication for the Network Monitoring Dashboard.
 
+**Related Pages:** [Home](Home) | [Installation](Installation) | [Provider Setup](Provider-Setup) | [Troubleshooting](Troubleshooting)
+
 ## Prerequisites
 
 - Keycloak server installed and running
@@ -275,7 +277,9 @@ const hasAccess = allRoles.includes('monitoring-access') ||
 
 ## Next Steps
 
-- See [PROVIDER_SETUP.md](PROVIDER_SETUP.md) for configuring providers
-- See [DISCORD_SETUP.md](DISCORD_SETUP.md) for Discord notifications
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
+- See [Provider Setup](Provider-Setup) for configuring providers
+- See [Discord Setup](Discord-Setup) for Discord notifications
+- See [Security](Security) for security best practices
+- See [Troubleshooting](Troubleshooting) for common issues
+- [Home](Home) - Wiki index
 
