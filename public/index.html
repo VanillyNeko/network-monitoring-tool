@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Monitoring Dashboard</title>
+    <meta name="robots" content="noindex, nofollow">
+    <script>
+        // Detect if we're in an iframe
+        window.isEmbedded = window.self !== window.top;
+        
+        // Get URL parameters for widget configuration
+        const widgetParams = new URLSearchParams(window.location.search);
+        window.widgetMode = widgetParams.get('mode') || (window.isEmbedded ? 'widget' : 'full');
+        window.widgetTheme = widgetParams.get('theme') || null;
+        window.widgetCompact = widgetParams.get('compact') === 'true';
+        window.widgetShowHeader = widgetParams.get('header') !== 'false';
+        window.widgetShowAuth = widgetParams.get('auth') !== 'false';
+    </script>
+    <style>
+        :root {
+            /* Light Theme (Default) */
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border-color: #e2e8f0;
+            --accent-primary: #3182ce;
+            --accent-secondary: #4299e1;
+            --success: #48bb78;
+            --error: #f56565;
+            --warning: #ed8936;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --shadow-lg: rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --bg-card: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --text-muted: #a0aec0;
+            --border-color: #4a5568;
+            --accent-primary: #63b3ed;
+            --accent-secondary: #90cdf4;
+            --success: #68d391;
+            --error: #fc8181;
+            --warning: #f6ad55;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --shadow-lg: rgba(0, 0, 0, 0.5);
+        }
+
+        [data-theme="anime"] {
+            --bg-primary: #1a1625;
+            --bg-secondary: #2d1b3d;
+            --bg-card: #3d284f;
+            --text-primary: #f0e6ff;
+            --text-secondary: #d4c2e8;
+            --text-muted: #b8a0d4;
+            --border-color: #5a3d7a;
+            --accent-primary: #c77dff;
+            --accent-secondary: #e0aaff;
+            --success: #7cff7c;
+            --error: #ff6b9d;
+            --warning: #ffb86c;
+            --shadow: rgba(199, 125, 255, 0.2);
+            --shadow-lg: rgba(199, 125, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .theme-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .theme-btn:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .theme-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.up {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-badge.down {
+            background: var(--error);
+            color: white;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .info-value.number {
+            font-family: 'Courier New', monospace;
+            color: var(--accent-primary);
+        }
+
+        .section {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .last-check {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Anime theme special effects */
+        [data-theme="anime"] .card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="anime"] .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(199, 125, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .auth-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            background: var(--accent-primary);
+            color: white;
+            font-weight: 500;
+        }
+
+        .limited-access {
+            opacity: 0.7;
+            position: relative;
+        }
+
+        .limited-access::after {
+            content: '🔒 Login for full details';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-card);
+            padding: 20px 40px;
+            border-radius: 8px;
+            border: 2px solid var(--accent-primary);
+            font-weight: 600;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .limited-access:hover::after {
+            opacity: 1;
+        }
+
+        /* Widget/Embedded Mode Styles */
+        body.widget-mode {
+            padding: 10px;
+        }
+
+        body.widget-mode .container {
+            max-width: 100%;
+        }
+
+        body.widget-mode .header {
+            margin-bottom: 15px;
+        }
+
+        body.widget-mode h1 {
+            font-size: 1.25rem;
+        }
+
+        body.widget-mode .card {
+            padding: 16px;
+        }
+
+        body.widget-mode.compact .card {
+            padding: 12px;
+        }
+
+        body.widget-mode.compact .card-header {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+        }
+
+        body.widget-mode.compact .card-title {
+            font-size: 1rem;
+        }
+
+        body.widget-mode.compact .section {
+            margin-top: 12px;
+        }
+
+        body.widget-mode.compact .section-title {
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+
+        body.widget-mode.compact .info-grid {
+            gap: 12px;
+        }
+
+        body.widget-mode.compact .info-label {
+            font-size: 0.7rem;
+        }
+
+        body.widget-mode.compact .info-value {
+            font-size: 0.9rem;
+        }
+
+        body.widget-mode.compact .last-check {
+            font-size: 0.75rem;
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+
+        body.widget-mode.no-header .header {
+            display: none !important;
+        }
+
+        body.widget-mode .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        body.widget-mode.compact .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            body.widget-mode .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <div class="header" id="main-header">
+            <h1>🌐 Network Monitoring Dashboard</h1>
+            <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                <div class="theme-selector">
+                    <button class="theme-btn active" data-theme="light">Light</button>
+                    <button class="theme-btn" data-theme="dark">Dark</button>
+                    <button class="theme-btn" data-theme="anime">Anime</button>
+                </div>
+                <div id="auth-section" style="display: none;">
+                    <span id="user-info" style="margin-right: 10px; color: var(--text-secondary); display: none;"></span>
+                    <button id="login-btn" class="theme-btn" style="display: none;">Login</button>
+                    <button id="logout-btn" class="theme-btn" style="display: none;">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="status" class="loading">Loading network status...</div>
+    </div>
+
+    <script>
+        // Initialize widget mode
+        (function() {
+            if (window.widgetMode === 'widget') {
+                document.body.classList.add('widget-mode');
+                if (window.widgetCompact) {
+                    document.body.classList.add('compact');
+                }
+                if (!window.widgetShowHeader) {
+                    document.body.classList.add('no-header');
+                }
+            }
+            
+            // Apply theme from URL parameter if provided
+            if (window.widgetTheme) {
+                document.documentElement.setAttribute('data-theme', window.widgetTheme);
+            }
+            
+            // Show/hide header based on configuration
+            const header = document.getElementById('main-header');
+            if (header) {
+                if (window.widgetMode === 'widget' && !window.widgetShowHeader) {
+                    header.style.display = 'none';
+                } else if (window.widgetMode === 'widget' && window.widgetShowHeader) {
+                    header.style.display = 'block';
+                } else if (window.widgetMode !== 'widget') {
+                    header.style.display = 'block';
+                }
+            }
+            
+            // Show/hide auth section
+            if (window.widgetMode === 'widget' && !window.widgetShowAuth) {
+                const authSection = document.getElementById('auth-section');
+                if (authSection) {
+                    authSection.style.display = 'none';
+                }
+            }
+        })();
+
+        // Theme management
+        function updateThemeButtons() {
+            const activeTheme = document.documentElement.getAttribute('data-theme');
+            const themeButtons = document.querySelectorAll('.theme-btn');
+            themeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-theme') === activeTheme);
+            });
+        }
+
+        const themeButtons = document.querySelectorAll('.theme-btn');
+        const currentTheme = window.widgetTheme || localStorage.getItem('theme') || 'light';
+        if (!window.widgetTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+        }
+        updateThemeButtons();
+
+        themeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.getAttribute('data-theme');
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                updateThemeButtons();
+            });
+        });
+
+        // Format data for display
+        function formatValue(key, value) {
+            if (value === null || value === undefined || value === 'N/A') return 'N/A';
+            if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+            if (typeof value === 'number') {
+                if (key.includes('percent') || key.includes('_percent')) {
+                    return `${value}%`;
+                }
+                if (key.includes('mbps') || key.includes('_rate')) {
+                    return `${value} Mbps`;
+                }
+                if (key.includes('mb') || key.includes('_mb')) {
+                    return `${value} MB`;
+                }
+                if (key.includes('gb') || key.includes('_gb')) {
+                    return `${value} GB`;
+                }
+                if (key.includes('seconds') || key.includes('uptime')) {
+                    if (value > 86400) {
+                        const days = Math.floor(value / 86400);
+                        const hours = Math.floor((value % 86400) / 3600);
+                        return `${days}d ${hours}h`;
+                    }
+                    if (value > 3600) {
+                        const hours = Math.floor(value / 3600);
+                        const minutes = Math.floor((value % 3600) / 60);
+                        return `${hours}h ${minutes}m`;
+                    }
+                    return `${Math.floor(value / 60)}m`;
+                }
+            }
+            if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                return new Date(value).toLocaleString();
+            }
+            return value;
+        }
+
+        function formatLabel(key) {
+            return key
+                .replace(/_/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^\w/, c => c.toUpperCase())
+                .trim();
+        }
+
+        function organizeDetails(details) {
+            const sections = {
+                'Connection': [],
+                'Signal': [],
+                'Device': [],
+                'Network': [],
+                'Performance': [],
+                'Gateway': [],
+                'Other': []
+            };
+
+            const connectionKeys = ['wan_status', 'connection_status', 'public_ip', 'private_ip', 'gateway_private_ip', 'behind_nat', 'internet_access', 'uptime', 'uptime_formatted'];
+            const signalKeys = ['signal_', 'rsrp', 'rsrq', 'rssi', 'sinr', 'band', 'bars', 'cid', 'antenna'];
+            const deviceKeys = ['device_', 'model', 'manufacturer', 'serial', 'firmware', 'hardware', 'version', 'kernel'];
+            const networkKeys = ['ip', 'netmask', 'dns', 'mac', 'apn', 'isp'];
+            const performanceKeys = ['cpu', 'memory', 'load', 'rate', 'bytes', 'packets', 'errors', 'dropped', 'speed'];
+            const gatewayKeys = ['gateway_'];
+
+            Object.keys(details).forEach(key => {
+                const value = details[key];
+                if (value === null || value === undefined || value === '') return;
+
+                let placed = false;
+                const keyLower = key.toLowerCase();
+
+                if (connectionKeys.some(k => keyLower.includes(k.toLowerCase()))) {
+                    sections['Connection'].push({ key, value });
+                    placed = true;
+                } else if (signalKeys.some(k => keyLower.includes(k.toLowerCase()))) {
+                    sections['Signal'].push({ key, value });
+                    placed = true;
+                } else if (deviceKeys.some(k => keyLower.includes(k.toLowerCase()))) {
+                    sections['Device'].push({ key, value });
+                    placed = true;
+                } else if (networkKeys.some(k => keyLower.includes(k.toLowerCase()))) {
+                    sections['Network'].push({ key, value });
+                    placed = true;
+                } else if (performanceKeys.some(k => keyLower.includes(k.toLowerCase()))) {
+                    sections['Performance'].push({ key, value });
+                    placed = true;
+                } else if (gatewayKeys.some(k => keyLower.includes(k.toLowerCase()))) {
+                    sections['Gateway'].push({ key, value });
+                    placed = true;
+                }
+
+                if (!placed) {
+                    sections['Other'].push({ key, value });
+                }
+            });
+
+            // Remove empty sections
+            Object.keys(sections).forEach(section => {
+                if (sections[section].length === 0) {
+                    delete sections[section];
+                }
+            });
+
+            return sections;
+        }
+
+        function renderDetails(details) {
+            const sections = organizeDetails(details);
+            let html = '';
+
+            Object.keys(sections).forEach(sectionName => {
+                html += `<div class="section">
+                    <div class="section-title">${sectionName}</div>
+                    <div class="info-grid">`;
+                
+                sections[sectionName].forEach(({ key, value }) => {
+                    const formattedValue = formatValue(key, value);
+                    const isNumber = typeof value === 'number' || (typeof formattedValue === 'string' && formattedValue.match(/^\d/));
+                    html += `
+                        <div class="info-item">
+                            <div class="info-label">${formatLabel(key)}</div>
+                            <div class="info-value ${isNumber ? 'number' : ''}">${formattedValue}</div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+            });
+
+            return html;
+        }
+
+        async function loadStatus() {
+            try {
+                const endpoint = isAuthenticated ? '/api/status/detailed' : '/api/status';
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                
+                if (!data.status || Object.keys(data.status).length === 0) {
+                    const statusEl = document.getElementById('status');
+                    if (statusEl && !statusEl.querySelector('.empty-state')) {
+                        statusEl.innerHTML = `
+                            <div class="empty-state">
+                                <svg fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <p>No providers configured</p>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+
+                // Ensure grid exists
+                let grid = document.querySelector('.stats-grid');
+                const statusEl = document.getElementById('status');
+                
+                if (!grid) {
+                    if (statusEl.classList.contains('loading')) {
+                        statusEl.classList.remove('loading');
+                        statusEl.innerHTML = '<div class="stats-grid"></div>';
+                    } else {
+                        statusEl.innerHTML = '<div class="stats-grid"></div>';
+                    }
+                    grid = document.querySelector('.stats-grid');
+                }
+                
+                // Update authentication state from response
+                if (data.authenticated !== undefined) {
+                    isAuthenticated = data.authenticated;
+                }
+
+                // Update or create cards for each provider
+                data.providers.forEach(provider => {
+                    const providerStatus = data.status[provider.name];
+                    if (providerStatus) {
+                        // For unauthenticated users, only show up/down status
+                        const limitedStatus = {
+                            up: providerStatus.up,
+                            details: isAuthenticated ? providerStatus.details : {},
+                            last_check: providerStatus.last_check
+                        };
+                        updateCard(provider.name, limitedStatus, !isAuthenticated);
+                    }
+                });
+                
+                // Remove loading class if present
+                if (statusEl) {
+                    statusEl.classList.remove('loading');
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('status');
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <div class="empty-state">
+                            <p>Error loading status: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Authentication state
+        let isAuthenticated = false;
+        let authCheckInterval = null;
+        let previousAuthState = false;
+
+        // Check authentication status
+        async function checkAuthStatus() {
+            try {
+                const res = await fetch('/api/auth/status', { credentials: 'include' });
+                const data = await res.json();
+                const wasAuthenticated = isAuthenticated;
+                isAuthenticated = data.authenticated || false;
+                updateAuthUI(data);
+                
+                // If authentication state changed, reload status data
+                if (wasAuthenticated !== isAuthenticated) {
+                    console.log('Authentication state changed:', isAuthenticated ? 'Authenticated' : 'Not authenticated');
+                    // Reload status with new authentication state
+                    loadStatus();
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+                const wasAuthenticated = isAuthenticated;
+                isAuthenticated = false;
+                updateAuthUI({ authenticated: false });
+                
+                // If we were authenticated and now we're not, reload
+                if (wasAuthenticated && !isAuthenticated) {
+                    loadStatus();
+                }
+            }
+        }
+
+        // Update authentication UI
+        function updateAuthUI(authData) {
+            const authSection = document.getElementById('auth-section');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const userInfo = document.getElementById('user-info');
+
+            // If Keycloak is not enabled, hide auth section
+            if (authData.keycloak_enabled === false) {
+                if (authSection) authSection.style.display = 'none';
+                return;
+            }
+
+            // Show auth section if Keycloak is enabled (or if we don't know yet)
+            if (authSection && (authData.keycloak_enabled === true || authData.keycloak_enabled === undefined)) {
+                authSection.style.display = 'flex';
+            }
+
+            if (authData.authenticated) {
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = 'block';
+                if (userInfo && authData.user) {
+                    const username = authData.user.preferred_username || 
+                                   authData.user.name || 
+                                   authData.user.email || 
+                                   'User';
+                    userInfo.textContent = `👤 ${username}`;
+                    userInfo.style.display = 'inline';
+                }
+            } else {
+                // Not authenticated - show login button
+                if (loginBtn) loginBtn.style.display = 'block';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'none';
+            }
+        }
+
+        // Login handler
+        document.getElementById('login-btn')?.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/login');
+                const data = await res.json();
+                if (data.login_url) {
+                    window.location.href = data.login_url;
+                }
+            } catch (error) {
+                console.error('Error initiating login:', error);
+            }
+        });
+
+        // Logout handler
+        document.getElementById('logout-btn')?.addEventListener('click', async () => {
+            try {
+                // Clear local authentication state
+                isAuthenticated = false;
+                
+                // Call logout endpoint to clear server session
+                const res = await fetch('/api/logout', { credentials: 'include' });
+                const data = await res.json();
+                
+                if (data.logout_url) {
+                    // Store a flag to check if we come back from Keycloak
+                    sessionStorage.setItem('logout_redirect', 'true');
+                    
+                    // Redirect to Keycloak logout, which should redirect back to our app
+                    window.location.href = data.logout_url;
+                    
+                    // Fallback: if we're still here after 5 seconds, redirect manually
+                    setTimeout(() => {
+                        if (sessionStorage.getItem('logout_redirect') === 'true') {
+                            sessionStorage.removeItem('logout_redirect');
+                            window.location.href = '/?logged_out=true';
+                        }
+                    }, 5000);
+                } else {
+                    // If no logout URL, just reload the page
+                    window.location.href = '/?logged_out=true';
+                }
+            } catch (error) {
+                console.error('Error initiating logout:', error);
+                // Even on error, redirect to clear state
+                window.location.href = '/?logged_out=true';
+            }
+        });
+        
+        // Check if we're returning from logout
+        if (new URLSearchParams(window.location.search).has('logged_out')) {
+            sessionStorage.removeItem('logout_redirect');
+            // Reload status to show logged out state
+            loadStatus();
+        }
+
+        // Modified loadStatus to use appropriate endpoint
+        async function loadStatus() {
+            try {
+                const endpoint = isAuthenticated ? '/api/status/detailed' : '/api/status';
+                const res = await fetch(endpoint, { credentials: 'include' });
+                
+                // If we got 401/403, we're not actually authenticated
+                if (res.status === 401 || res.status === 403) {
+                    isAuthenticated = false;
+                    // Retry with public endpoint
+                    const publicRes = await fetch('/api/status', { credentials: 'include' });
+                    const publicData = await publicRes.json();
+                    return processStatusData(publicData);
+                }
+                
+                const data = await res.json();
+                return processStatusData(data);
+            } catch (error) {
+                const statusEl = document.getElementById('status');
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <div class="empty-state">
+                            <p>Error loading status: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        function processStatusData(data) {
+            if (!data.status || Object.keys(data.status).length === 0) {
+                const statusEl = document.getElementById('status');
+                if (statusEl && !statusEl.querySelector('.empty-state')) {
+                    statusEl.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                            <p>No providers configured</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            // Update authentication state from response
+            if (data.authenticated !== undefined) {
+                const wasAuthenticated = isAuthenticated;
+                isAuthenticated = data.authenticated;
+                
+                // If authentication state changed, update UI
+                if (wasAuthenticated !== isAuthenticated) {
+                    checkAuthStatus(); // This will update the UI
+                }
+            }
+
+            // Ensure grid exists
+            let grid = document.querySelector('.stats-grid');
+            const statusEl = document.getElementById('status');
+            
+            if (!grid) {
+                if (statusEl.classList.contains('loading')) {
+                    statusEl.classList.remove('loading');
+                    statusEl.innerHTML = '<div class="stats-grid"></div>';
+                } else {
+                    statusEl.innerHTML = '<div class="stats-grid"></div>';
+                }
+                grid = document.querySelector('.stats-grid');
+            }
+            
+            // Update or create cards for each provider
+            data.providers.forEach(provider => {
+                const providerStatus = data.status[provider.name];
+                if (providerStatus) {
+                    // For unauthenticated users, only show up/down status
+                    const limitedStatus = {
+                        up: providerStatus.up,
+                        details: isAuthenticated ? providerStatus.details : {},
+                        last_check: providerStatus.last_check
+                    };
+                    updateCard(provider.name, limitedStatus, !isAuthenticated);
+                }
+            });
+            
+            // Remove loading class if present
+            if (statusEl) {
+                statusEl.classList.remove('loading');
+            }
+        }
+
+        // Modified updateCard to handle limited access
+        function updateCard(providerName, status, isLimited = false) {
+            const cardId = `card-${providerName.replace(/\s+/g, '-').toLowerCase()}`;
+            let card = document.getElementById(cardId);
+            
+            if (!card) {
+                // Card doesn't exist, create it
+                const grid = document.querySelector('.stats-grid') || document.getElementById('status');
+                if (!grid) return;
+                
+                const limitedClass = isLimited ? ' limited-access' : '';
+                const cardHTML = `
+                    <div class="card${limitedClass}" id="${cardId}">
+                        <div class="card-header">
+                            <div class="card-title">${providerName}</div>
+                            <div class="status-badge ${status.up ? 'up' : 'down'}" id="${cardId}-badge">
+                                ${status.up ? '✓ Online' : '✗ Offline'}
+                            </div>
+                        </div>
+                        <div class="card-content" id="${cardId}-content">
+                            ${status.details && Object.keys(status.details).length > 0 ? renderDetails(status.details) : '<p>No details available</p>'}
+                        </div>
+                        <div class="last-check" id="${cardId}-lastcheck">
+                            Last checked: ${new Date(status.last_check).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+                
+                if (grid.classList && grid.classList.contains('stats-grid')) {
+                    grid.insertAdjacentHTML('beforeend', cardHTML);
+                } else {
+                    grid.innerHTML = '<div class="stats-grid">' + cardHTML + '</div>';
+                }
+                card = document.getElementById(cardId);
+            } else {
+                // Update existing card
+                const badge = document.getElementById(`${cardId}-badge`);
+                const content = document.getElementById(`${cardId}-content`);
+                const lastCheck = document.getElementById(`${cardId}-lastcheck`);
+                
+                // Update limited access class
+                if (isLimited) {
+                    card.classList.add('limited-access');
+                } else {
+                    card.classList.remove('limited-access');
+                }
+                
+                if (badge) {
+                    badge.className = `status-badge ${status.up ? 'up' : 'down'}`;
+                    badge.textContent = status.up ? '✓ Online' : '✗ Offline';
+                }
+                
+                if (content) {
+                    if (status.details && Object.keys(status.details).length > 0) {
+                        content.innerHTML = renderDetails(status.details);
+                    } else {
+                        content.innerHTML = '<p>No details available</p>';
+                    }
+                }
+                
+                if (lastCheck) {
+                    lastCheck.textContent = `Last checked: ${new Date(status.last_check).toLocaleString()}`;
+                }
+            }
+        }
+
+        // Check if we're returning from Keycloak login (has code parameter)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('code') || urlParams.has('state')) {
+            // We're returning from Keycloak, check auth and reload
+            console.log('Returning from Keycloak login, checking authentication...');
+        }
+        
+        // Initialize authentication check and load status
+        // Check auth first, then load status (which will use the correct endpoint)
+        async function initialize() {
+            await checkAuthStatus();
+            // Small delay to ensure session is established
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await loadStatus();
+        }
+        
+        initialize();
+        
+        // Check auth status every 30 seconds
+        setInterval(checkAuthStatus, 30000);
+        
+        // Load status every 60 seconds
+        setInterval(loadStatus, 60000);
+        
+        // Also check auth status when page becomes visible (user might have logged in in another tab)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                checkAuthStatus();
+                // Reload status after a short delay to ensure session is checked
+                setTimeout(loadStatus, 500);
+            }
+        });
+        
+        // Check auth status on focus (user might have logged in in another window)
+        window.addEventListener('focus', () => {
+            checkAuthStatus();
+            setTimeout(loadStatus, 500);
+        });
+    </script>
+</body>
+</html>

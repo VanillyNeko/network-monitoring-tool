@@ -1,0 +1,41 @@
+{
+    "name": "network-monitor",
+    "version": "1.0.0",
+    "description": "Multi-provider network monitoring dashboard with Keycloak authentication, real-time status tracking, and Discord notifications",
+    "main": "monitor.js",
+    "keywords": [
+        "network-monitoring",
+        "internet-monitor",
+        "provider-monitor",
+        "status-dashboard",
+        "keycloak",
+        "unifi",
+        "discord-webhook",
+        "network-health"
+    ],
+    "author": "VanillyNeko",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/VanillyNeko/network-monitoring-tool.git"
+    },
+    "bugs": {
+        "url": "https://github.com/VanillyNeko/network-monitoring-tool/issues"
+    },
+    "homepage": "https://github.com/VanillyNeko/network-monitoring-tool#readme",
+    "dependencies": {
+      "express": "^4.18.2",
+      "node-fetch": "^2.7.0",
+      "keycloak-connect": "^23.0.0",
+      "express-session": "^1.17.3"
+    },
+    "scripts": {
+      "start": "node monitor.js",
+      "pm2:start": "pm2 start ecosystem.config.js",
+      "pm2:stop": "pm2 stop cell-monitoring",
+      "pm2:restart": "pm2 restart cell-monitoring",
+      "pm2:delete": "pm2 delete cell-monitoring",
+      "pm2:logs": "pm2 logs cell-monitoring",
+      "pm2:status": "pm2 status"
+    }
+  }

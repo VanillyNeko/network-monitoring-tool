@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Configuration (contains secrets)
+config.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pm2-*.log
+
+# Environment variables
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PM2
+.pm2/
+ecosystem.config.js
+
+# Temporary files
+*.tmp
+*.temp
+list-unifi-sites.js
+
+# Build files (if any)
+dist/
+build/
+

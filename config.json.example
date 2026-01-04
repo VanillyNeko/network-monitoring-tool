@@ -1,0 +1,53 @@
+{
+    "providers": [
+      {
+        "name": "T-Mobile Home Internet",
+        "ip": "192.168.12.1",
+        "api_url": "http://192.168.12.1/TMI/v1/gateway?get=all",
+        "health_key_path": ["connectionStatus", "connected"],
+        "signal_keys": ["rsrp", "rsrq", "sinr", "band"],
+        "requires_auth": false,
+        "gateway_wan_port": "wan2"
+      },
+      {
+        "name": "AT&T Business Wireless",
+        "ip": "192.168.45.1",
+        "api_url": "http://192.168.45.1/GetNvInfo",
+        "alt_api_urls": [
+          "http://192.168.45.1/cgi-bin/GetNvInfo.ha"
+        ],
+        "health_key_path": ["ConnUP", "true"],
+        "signal_keys": ["RSRP", "RSRQ", "SINR", "Band"],
+        "requires_auth": true,
+        "gateway_wan_port": "wan3"
+      },
+      {
+        "name": "Cable Internet (via UniFi Gateway)",
+        "type": "unifi_api",
+        "controller_url": "https://10.27.27.1",
+        "api_key": "your-unifi-api-key-here",
+        "site": "default",
+        "wan_port": "wan1",
+        "signal_keys": []
+      }
+    ],
+    "discord": {
+      "webhook_url": "https://discord.com/api/webhooks/YOUR_ID/YOUR_TOKEN"
+    },
+    "keycloak": {
+      "enabled": false,
+      "server_url": "https://keycloak.example.com",
+      "realm": "your-realm",
+      "client_id": "netmonitoring",
+      "client_secret": "your-client-secret-here",
+      "required_role": "admin",
+      "confidential_port": 0,
+      "base_url": "https://your-domain.com",
+      "use_wildcard_redirect": true
+    },
+    "session_secret": "generate-a-random-secret-here",
+    "check_interval_seconds": 60,
+    "web_port": 5643,
+    "allow_embedding": true
+  }
+
