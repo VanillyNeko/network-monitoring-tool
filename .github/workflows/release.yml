@@ -76,9 +76,9 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/network-monitoring-tool:${{ steps.version.outputs.version }}
           \`\`\`
           
-          Or use docker-compose:
+          Or use docker compose:
           \`\`\`bash
-          docker-compose up -d
+          docker compose up -d
           \`\`\`
           EOF
           cat release_notes.md

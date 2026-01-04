@@ -144,6 +144,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
       - name: Create test config
         run: |
           cp config.json.example config.json
@@ -165,14 +168,14 @@ jobs:
             fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
           "
       
-      - name: Test docker-compose build
-        run: docker-compose -f docker-compose.yml build
+      - name: Test docker compose build
+        run: docker compose -f docker-compose.yml build
       
-      - name: Test docker-compose up
+      - name: Test docker compose up
         run: |
-          docker-compose -f docker-compose.yml up -d
+          docker compose -f docker-compose.yml up -d
           sleep 10
-          docker-compose -f docker-compose.yml ps
-          docker-compose -f docker-compose.yml logs
-          docker-compose -f docker-compose.yml down
+          docker compose -f docker-compose.yml ps
+          docker compose -f docker-compose.yml logs
+          docker compose -f docker-compose.yml down
 
